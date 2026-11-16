@@ -1,0 +1,46 @@
+build:
+  image: eclipse-temurin:21
+  stage: build
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  script:
+    # Fabric build
+    - ./gradlew publish --stacktrace
+    # Forge build
+    # - sed -i -e 's/fabric/forge/g' gradle.properties
+    # - ./gradlew clean publish --stacktrace
+  artifacts:
+    paths:
+      - maven
+    name: "emc-$CI_COMMIT_SHORT_SHA-snapshot"
+
+deploy:
+  image: node:latest
+  stage: deploy
+  resource_group: production
+  dependencies:
+    - build
+  variables:
+    GIT_EMAIL: "ci@gitlab.com"
+    GIT_NAME: "GitLab CI"
+  before_script:
+    - apt update
+    - apt install -y git openssh-client rsync
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - git config --global user.email "$GIT_EMAIL"
+    - git config --global user.name "$GIT_NAME"
+  script:
+    - git clone git@gitlab.com:EMC-Framework/maven.git maven-remote
+    - rsync -r -I maven/* maven-remote
+    - cd maven-remote
+    # - node update-latest.js
+    - git add .
+    - git commit -m "EMC snapshot $CI_COMMIT_SHORT_SHA"
+    - git push
+  only:
+    - "1.21.5"

@@ -1,0 +1,144 @@
+package me.deftware.client.framework.message;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.Style;
+
+public interface Appearance {
+
+    int OBFUSCATED = 0b00000001;
+    int BOLD = 0b00000010;
+    int STRIKETHROUGH = 0b00000100;
+    int UNDERLINED = 0b00001000;
+    int ITALIC = 0b00010000;
+
+    static Appearance empty() {
+        return (Appearance) (Object) Style.EMPTY;
+    }
+
+    static Appearance of(FormattingColor color) {
+        return of(0, color);
+    }
+
+    static Appearance of(int flags) {
+        return of(flags, null);
+    }
+
+    static Appearance of(int flags, FormattingColor color) {
+        var style = (Appearance) (Object) Style.EMPTY;
+        if (flags > 0) {
+            style = style.format(flags);
+        }
+        if (color != null) {
+            style = style.color(color);
+        }
+        return style;
+    }
+
+    default Appearance format(int flags) {
+        List<ChatFormatting> options = new ArrayList<>();
+        if ((flags & ITALIC) != 0) options.add(ChatFormatting.ITALIC);
+        if ((flags & BOLD) != 0) options.add(ChatFormatting.BOLD);
+        if ((flags & UNDERLINED) != 0) options.add(ChatFormatting.UNDERLINE);
+        if ((flags & STRIKETHROUGH) != 0) options.add(ChatFormatting.STRIKETHROUGH);
+        if ((flags & OBFUSCATED) != 0) options.add(ChatFormatting.OBFUSCATED);
+        return (Appearance) (Object) ((Style) (Object) this).applyFormats(options.toArray(new ChatFormatting[0]));
+    }
+
+    default Appearance color(FormattingColor color) {
+        return (Appearance) (Object) ((Style) (Object) this).withColor(color.getColor());
+    }
+
+    default Appearance withClickEvent(ClickAction action, String value) {
+        try {
+            var event = action.instantiate(value);
+            return (Appearance) (Object) ((Style) (Object) this).withClickEvent(event);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return this;
+    }
+
+    default Appearance withTextHoverEvent(Message text) {
+        var event = new HoverEvent.ShowText((Component) text);
+        return (Appearance) (Object) ((Style) (Object) this).withHoverEvent(event);
+    }
+
+    boolean isItalic();
+
+    boolean isBold();
+
+    boolean isUnderlined();
+
+    boolean isStrikethrough();
+
+    boolean isObfuscated();
+
+    interface FormattingColor {
+
+        /**
+         * @return Name of the color
+         */
+        String getName();
+
+        /**
+         * @return Legacy color code
+         */
+        Optional<Character> getCode();
+
+        /**
+         * @return Rgb value of the color
+         */
+        int getColor();
+
+        static FormattingColor ofRGB(int rgb) {
+            return new FormattingColor() {
+                @Override
+                public String getName() {
+                    return "RGB";
+                }
+
+                @Override
+                public Optional<Character> getCode() {
+                    return Optional.empty();
+                }
+
+                @Override
+                public int getColor() {
+                    return rgb;
+                }
+            };
+        }
+
+    }
+
+    enum ClickAction {
+
+        OPEN_URL,
+        OPEN_FILE,
+        RUN_COMMAND,
+        SUGGEST_COMMAND,
+        CHANGE_PAGE,
+        COPY_TO_CLIPBOARD;
+
+        ClickEvent instantiate(String arg) throws URISyntaxException {
+            return switch (this) {
+                case OPEN_URL -> new ClickEvent.OpenUrl(new URI(arg));
+                case OPEN_FILE -> new ClickEvent.OpenFile(arg);
+                case RUN_COMMAND -> new ClickEvent.RunCommand(arg);
+                case SUGGEST_COMMAND -> new ClickEvent.SuggestCommand(arg);
+                case CHANGE_PAGE -> new ClickEvent.ChangePage(Integer.parseInt(arg));
+                case COPY_TO_CLIPBOARD -> new ClickEvent.CopyToClipboard(arg);
+            };
+        }
+
+    }
+
+}
