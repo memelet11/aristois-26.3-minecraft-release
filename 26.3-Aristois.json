@@ -1,0 +1,57 @@
+{
+  "libraries": [
+    {
+      "name": "net.fabricmc:fabric-loader:0.20.1",
+      "url": "https://maven.fabricmc.net/"
+    },
+    {
+      "name": "net.fabricmc:sponge-mixin:0.17.5+mixin.0.8.7",
+      "url": "https://maven.fabricmc.net/"
+    },
+    {
+      "name": "org.ow2.asm:asm:9.10.1",
+      "url": "https://maven.fabricmc.net/"
+    },
+    {
+      "name": "org.ow2.asm:asm-analysis:9.10.1",
+      "url": "https://maven.fabricmc.net/"
+    },
+    {
+      "name": "org.ow2.asm:asm-commons:9.10.1",
+      "url": "https://maven.fabricmc.net/"
+    },
+    {
+      "name": "org.ow2.asm:asm-tree:9.10.1",
+      "url": "https://maven.fabricmc.net/"
+    },
+    {
+      "name": "org.ow2.asm:asm-util:9.10.1",
+      "url": "https://maven.fabricmc.net/"
+    },
+    {
+      "name": "io.netty:netty-codec-socks:4.2.16.Final",
+      "url": "https://repo.maven.apache.org/maven2/"
+    },
+    {
+      "name": "io.netty:netty-handler-proxy:4.2.16.Final",
+      "url": "https://repo.maven.apache.org/maven2/"
+    },
+    {
+      "name": "com.google.code.findbugs:jsr305:3.0.2",
+      "url": "https://repo.maven.apache.org/maven2/"
+    },
+    {
+      "name": "com.thealtening.auth:auth:3.0.2-j9",
+      "url": "https://repo.maven.apache.org/maven2/"
+    },
+    {
+      "name": "me.deftware:EMC-F-v2:latest-26.3"
+    }
+  ],
+  "mainClass": "me.deftware.weaver.Main",
+  "id": "26.3-Aristois",
+  "time": "2026-09-15T11:23:02+00:00",
+  "releaseTime": "2026-09-15T11:23:02+00:00",
+  "inheritsFrom": "26.3",
+  "type": "release"
+}
