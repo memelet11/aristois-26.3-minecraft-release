@@ -2,6 +2,8 @@ package me.deftware.client.framework.render.texture;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.renderpearl.api.textures.FilterMode;
+import com.mojang.renderpearl.api.textures.GpuSampler;
 import com.mojang.renderpearl.api.textures.GpuTexture;
 import lombok.Getter;
 import me.deftware.client.framework.gui.GuiScreen;
@@ -11,9 +13,15 @@ import me.deftware.client.framework.render.gl.GLX;
 import me.deftware.client.framework.util.ResourceUtils;
 import me.deftware.client.framework.util.minecraft.MinecraftIdentifier;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.gui.render.TextureSetup;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.state.gui.BlitRenderState;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import org.joml.Matrix3x2f;
+import org.joml.Matrix3x2fc;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
@@ -35,7 +43,7 @@ public class GlTexture implements GuiScreen.BackgroundType {
     protected DynamicTexture dynamicTexture;
 
     @Getter
-    protected int textureWidth, textureHeight, scaling;
+    protected int textureWidth, textureHeight, scaling = GL11.GL_LINEAR;
 
     public GlTexture(EMCMod mod, String asset) throws IOException {
         this(
@@ -191,6 +199,7 @@ public class GlTexture implements GuiScreen.BackgroundType {
 
     public static void bindTexture(MinecraftIdentifier id) {
         AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(id);
+        boundGlTexture = null;
         boundMcTexture = texture;
         if (texture != null) {
             bindTexture(texture.getTexture());
@@ -201,36 +210,59 @@ public class GlTexture implements GuiScreen.BackgroundType {
         return boundMcTexture;
     }
 
+    public static Matrix3x2f computeBlitPose(Matrix3x2fc currentPose, boolean customMatrix, double guiScale) {
+        Matrix3x2f pose = new Matrix3x2f(currentPose);
+        if (customMatrix) {
+            float inv = 1.0f / (float) Math.max(1.0, guiScale);
+            pose.scaleLocal(inv, inv);
+        }
+        return pose;
+    }
+
+    public static int packGlxColor(float r, float g, float b, float a) {
+        int ai = Math.round(clamp01(a) * 255.0f);
+        int ri = Math.round(clamp01(r) * 255.0f);
+        int gi = Math.round(clamp01(g) * 255.0f);
+        int bi = Math.round(clamp01(b) * 255.0f);
+        return (ai << 24) | (ri << 16) | (gi << 8) | bi;
+    }
+
+    private static float clamp01(float v) {
+        return v < 0.0f ? 0.0f : Math.min(1.0f, v);
+    }
+
     private static void drawTexture(GLX context, int x0, int x1, int y0, int y1, int z, int regionWidth, int regionHeight, float u, float v, int textureWidth, int textureHeight) {
         drawTexturedQuad(context, x0, x1, y0, y1, z, u / textureWidth, (u + regionWidth) / textureWidth, v / textureHeight, (v + regionHeight) / textureHeight);
     }
 
     private static void drawTexturedQuad(GLX context, int x0, int x1, int y0, int y1, int z, float u0, float u1, float v0, float v1) {
-        if (context != null && context.getContext() != null && boundMcTexture != null && boundMcTexture.getTextureView() != null) {
-            var gfx = context.getContext();
-            ScreenRectangle clip = RenderStack.getActiveScissor(gfx);
-            if (clip != null && (clip.width() <= 0 || clip.height() <= 0)) {
-                return;
-            }
-            boolean pushedScissor = false;
-            if (clip != null) {
-                gfx.enableScissor(clip.left(), clip.top(), clip.right(), clip.bottom());
-                pushedScissor = true;
-            }
-            boolean custom = RenderStack.isInCustomMatrix();
-            if (custom) {
-                float inv = 1f / (float) Minecraft.getInstance().getWindow().getGuiScale();
-                gfx.pose().pushMatrix();
-                gfx.pose().scale(inv, inv);
-            }
-            gfx.blit(boundMcTexture.getTextureView(), boundMcTexture.getSampler(), x0, y0, x1, y1, u0, u1, v0, v1);
-            if (custom) {
-                gfx.pose().popMatrix();
-            }
-            if (pushedScissor) {
-                gfx.disableScissor();
-            }
+        if (context == null || context.getContext() == null || boundMcTexture == null || boundMcTexture.getTextureView() == null) {
+            return;
         }
+        GuiGraphicsExtractor gfx = context.getContext();
+        ScreenRectangle clip = RenderStack.getActiveScissor(gfx);
+        if (clip != null && (clip.width() <= 0 || clip.height() <= 0)) {
+            return;
+        }
+        double guiScale = Minecraft.getInstance().getWindow().getGuiScale();
+        Matrix3x2f pose = computeBlitPose(gfx.pose(), RenderStack.isInCustomMatrix(), guiScale);
+        GpuSampler sampler = boundMcTexture.getSampler();
+        if (boundGlTexture != null && RenderSystem.tryGetDevice() != null) {
+            FilterMode mode = boundGlTexture.getScaling() == GL11.GL_NEAREST ? FilterMode.NEAREST : FilterMode.LINEAR;
+            sampler = RenderSystem.getSamplerCache().getClampToEdge(mode);
+        } else if (sampler == null && RenderSystem.tryGetDevice() != null) {
+            sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
+        }
+        int argb = packGlxColor(context.getColorR(), context.getColorG(), context.getColorB(), context.getColorA());
+        gfx.guiRenderState.addGuiElement(new BlitRenderState(
+                RenderPipelines.GUI_TEXTURED,
+                TextureSetup.singleTexture(boundMcTexture.getTextureView(), sampler),
+                pose,
+                x0, y0, x1, y1,
+                u0, u1, v0, v1,
+                argb,
+                clip
+        ));
     }
 
 }

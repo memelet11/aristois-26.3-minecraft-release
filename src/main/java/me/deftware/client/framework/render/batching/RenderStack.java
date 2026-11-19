@@ -416,18 +416,23 @@ public abstract class RenderStack<T> implements VertexConstructor {
 		return new ScreenVertex(v.x * scaleFix, v.y * scaleFix, v.u, v.v, packColor(v));
 	}
 
-	private void addLineQuad2D(List<ScreenQuad> quads, MutableVertex a, MutableVertex b, float scaleFix) {
-		addLineQuadScreen(quads, toScreen2D(a, scaleFix), toScreen2D(b, scaleFix));
+	public static float compute3DLineHalfWidthGui(float lineWidth, double guiScale) {
+		float safeScale = (float) Math.max(1.0, guiScale);
+		float pixelWidth = Math.max(1.25f, lineWidth * 0.75f);
+		return (pixelWidth * 0.5f) / safeScale;
 	}
 
-	private void addLineQuadScreen(List<ScreenQuad> quads, ScreenVertex p0, ScreenVertex p1) {
+	private void addLineQuad2D(List<ScreenQuad> quads, MutableVertex a, MutableVertex b, float scaleFix) {
+		addLineQuadScreen(quads, toScreen2D(a, scaleFix), toScreen2D(b, scaleFix), Math.max(0.5f, lineWidth * 0.5f));
+	}
+
+	private void addLineQuadScreen(List<ScreenQuad> quads, ScreenVertex p0, ScreenVertex p1, float halfW) {
 		float dx = p1.x - p0.x;
 		float dy = p1.y - p0.y;
 		float len = (float) Math.hypot(dx, dy);
 		if (len < 1.0e-4f) {
 			return;
 		}
-		float halfW = Math.max(0.5f, lineWidth * 0.5f);
 		float nx = (-dy / len) * halfW;
 		float ny = (dx / len) * halfW;
 		addNormalizedQuad(
@@ -523,7 +528,12 @@ public abstract class RenderStack<T> implements VertexConstructor {
 		}
 		ScreenVertex sa = clipToScreen(ca, guiW, guiH, u0, v0, c0);
 		ScreenVertex sb = clipToScreen(cb, guiW, guiH, u1, v1, c1);
-		addLineQuadScreen(quads, sa, sb);
+		double guiScale = 1.0;
+		Minecraft mc = Minecraft.getInstance();
+		if (mc != null && mc.getWindow() != null) {
+			guiScale = mc.getWindow().getGuiScale();
+		}
+		addLineQuadScreen(quads, sa, sb, compute3DLineHalfWidthGui(lineWidth, guiScale));
 	}
 
 	private void addClippedTriangle3D(List<ScreenQuad> quads, Matrix4f viewProj, float guiW, float guiH, MutableVertex a, MutableVertex b, MutableVertex c) {
