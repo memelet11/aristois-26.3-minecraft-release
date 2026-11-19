@@ -11,7 +11,15 @@ public class CPacketEntityAction extends PacketWrapper {
     }
     
     public Action getAction() {
-        return Action.values()[((ServerboundPlayerCommandPacket)packet).getAction().ordinal()];
+        return switch (((ServerboundPlayerCommandPacket) packet).getAction()) {
+            case STOP_SLEEPING -> Action.STOP_SLEEP;
+            case START_SPRINTING -> Action.START_SPRINT;
+            case STOP_SPRINTING -> Action.STOP_SPRINT;
+            case START_RIDING_JUMP -> Action.START_HORSE_JUMP;
+            case STOP_RIDING_JUMP -> Action.STOP_HORSE_JUMP;
+            case OPEN_INVENTORY -> Action.OPEN_INVENTORY;
+            case START_FALL_FLYING -> Action.START_GLIDING;
+        };
     }
     
     public enum Action {

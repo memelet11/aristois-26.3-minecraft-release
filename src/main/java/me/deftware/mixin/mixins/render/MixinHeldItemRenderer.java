@@ -46,8 +46,18 @@ public class MixinHeldItemRenderer {
         var data = stack.get(DataComponents.MAP_DECORATIONS);
         if (data != null) {
             for (Map.Entry<String, MapDecorations.Entry> entry : data.decorations().entrySet()) {
-                var structure = getStructure(entry.getKey());
                 var decoration = entry.getValue();
+                var type = decoration.type();
+                EventStructureLocation.StructureType structure;
+                if (type.equals(net.minecraft.world.level.saveddata.maps.MapDecorationTypes.RED_X)) {
+                    structure = EventStructureLocation.StructureType.BuriedTreasure;
+                } else if (type.equals(net.minecraft.world.level.saveddata.maps.MapDecorationTypes.OCEAN_MONUMENT)) {
+                    structure = EventStructureLocation.StructureType.OceanMonument;
+                } else if (type.equals(net.minecraft.world.level.saveddata.maps.MapDecorationTypes.WOODLAND_MANSION)) {
+                    structure = EventStructureLocation.StructureType.WoodlandMansion;
+                } else {
+                    structure = getStructure(entry.getKey());
+                }
                 new EventStructureLocation(
                         Vector3.ofDouble(decoration.x(), 0d, decoration.z()), structure
                 ).broadcast();

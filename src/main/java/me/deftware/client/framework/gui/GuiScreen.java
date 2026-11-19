@@ -12,6 +12,7 @@ import me.deftware.client.framework.render.gl.GLX;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -122,6 +123,14 @@ public abstract class GuiScreen extends Screen implements GenericScreen {
 		if (onKeyReleased(glfwKey, scanCode, modifiers))
 			return true;
 		return super.keyReleased(event);
+	}
+
+	@Override
+	public boolean charTyped(CharacterEvent event) {
+		if (!GLFW.isCharDispatchedInHandler()) {
+			GLFW.dispatchChar(0L, event.codepoint());
+		}
+		return super.charTyped(event);
 	}
 
 	protected MinecraftScreen getMinecraftScreen() {

@@ -100,4 +100,10 @@ public interface World {
 	@ApiStatus.Internal
 	HashMap<Long, BlockEntity> getInternalLongToBlockEntity();
 
+	@ApiStatus.Internal
+	void emcRegisterBlockEntity(BlockEntity entity);
+
+	@ApiStatus.Internal
+	void emcRemoveBlockEntity(net.minecraft.core.BlockPos pos);
+
 }

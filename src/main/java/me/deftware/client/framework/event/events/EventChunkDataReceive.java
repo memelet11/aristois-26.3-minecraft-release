@@ -24,12 +24,12 @@ public class EventChunkDataReceive extends Event {
     public EventChunkDataReceive(ClientboundLevelChunkWithLightPacket rootPacket) {
         this.rootPacket = rootPacket;
         this.rawPos = new ChunkPos(rootPacket.x(), rootPacket.z());
-        isInitialFullChunk = rootPacket.isSkippable(); // TODO: Verify isWritingErrorSkippable
+        isInitialFullChunk = true;
         updateFullChunk(rootPacket);
     }
 
     private void updateFullChunk(ClientboundLevelChunkWithLightPacket rootPacket) {
-        updatedIsFullChunk = rootPacket.isSkippable();
+        updatedIsFullChunk = true;
     }
 
 }

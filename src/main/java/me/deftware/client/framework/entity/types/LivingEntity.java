@@ -59,7 +59,7 @@ public class LivingEntity extends Entity {
 	}
 
 	public float getMoveForward() {
-		return getMinecraftEntity().yya;
+		return getMinecraftEntity().zza;
 	}
 
 	public void setAlive(boolean flag) {

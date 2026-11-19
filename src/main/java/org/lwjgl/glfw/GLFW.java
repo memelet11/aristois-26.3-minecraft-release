@@ -182,6 +182,7 @@ public class GLFW {
     public static final int GLFW_NOT_ALLOWED_CURSOR = 0x0003600A;
 
     private static volatile GLFWCharCallbackI charCallback;
+    private static boolean charDispatchedInHandler = false;
 
     private static final Map<Integer, Integer> SDL_TO_GLFW = new HashMap<>();
     private static final Map<Integer, Integer> GLFW_TO_SDL = new HashMap<>();
@@ -274,6 +275,14 @@ public class GLFW {
         }
     }
 
+    public static void setCharDispatchedInHandler(boolean state) {
+        charDispatchedInHandler = state;
+    }
+
+    public static boolean isCharDispatchedInHandler() {
+        return charDispatchedInHandler;
+    }
+
     public static int sdlScancodeToGlfwKey(int scancode, int keycode) {
         Integer mapped = SDL_TO_GLFW.get(scancode);
         if (mapped != null) {
@@ -326,8 +335,6 @@ public class GLFW {
         if ((sdlMods & InputConstants.MOD_CONTROL) != 0) mods |= GLFW_MOD_CONTROL;
         if ((sdlMods & InputConstants.MOD_ALT) != 0) mods |= GLFW_MOD_ALT;
         if ((sdlMods & InputConstants.MOD_SUPER) != 0) mods |= GLFW_MOD_SUPER;
-        if ((sdlMods & InputConstants.MOD_CAPS_LOCK) != 0) mods |= GLFW_MOD_CAPS_LOCK;
-        if ((sdlMods & InputConstants.MOD_NUM_LOCK) != 0) mods |= GLFW_MOD_NUM_LOCK;
         return mods;
     }
 

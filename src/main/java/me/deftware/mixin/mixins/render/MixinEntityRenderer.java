@@ -25,7 +25,7 @@ public abstract class MixinEntityRenderer implements IMixinEntityRenderer {
     @Unique
     private final EventHurtcam eventHurtcam = new EventHurtcam();
 
-    @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "bobHurt", at = @At("HEAD"), cancellable = true)
     private void hurtCameraEffect(CameraRenderState cameraRenderState, PoseStack stack, CallbackInfo ci) {
         eventHurtcam.setCanceled(false);
         eventHurtcam.broadcast();
@@ -47,7 +47,7 @@ public abstract class MixinEntityRenderer implements IMixinEntityRenderer {
 
     @Inject(method = "resize", at = @At("HEAD"))
     private void onResized(int width, int height, CallbackInfo ci) {
-        if (shader != null) {
+        if (shader != null && shader.getFramebuffer() != null) {
             shader.getFramebuffer().resize(width, height);
         }
     }

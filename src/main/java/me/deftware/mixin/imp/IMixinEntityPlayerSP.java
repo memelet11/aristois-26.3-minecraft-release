@@ -6,4 +6,6 @@ public interface IMixinEntityPlayerSP {
 
 	void sendMessageWithSender(String message, Class<?> sender);
 
+	void forcePositionSync();
+
 }

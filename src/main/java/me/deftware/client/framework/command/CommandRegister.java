@@ -43,6 +43,9 @@ public class CommandRegister {
         CommandNode<SharedSuggestionProvider> node = dispatcher.register(command.build());
         for (Object alias : command.getAliases()) {
             LiteralArgumentBuilder<SharedSuggestionProvider> argumentBuilder = LiteralArgumentBuilder.literal((String) alias);
+            if (node.getCommand() != null) {
+                argumentBuilder.executes(node.getCommand());
+            }
             dispatcher.register(argumentBuilder.redirect(node));
         }
     }

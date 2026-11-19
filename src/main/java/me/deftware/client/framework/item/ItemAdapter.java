@@ -27,15 +27,16 @@ public final class ItemAdapter {
         if (mcItem == null) {
             return null;
         }
+        if (!mcItem.builtInRegistryHolder().areComponentsBound()) {
+            return (Item) mcItem;
+        }
         return CACHE.computeIfAbsent(mcItem, item -> {
-            if (item.builtInRegistryHolder().areComponentsBound()) {
-                Equippable equippable = item.components().get(DataComponents.EQUIPPABLE);
-                if (equippable != null && equippable.slot().isArmor()) {
-                    return new ArmorAdapter(item, equippable);
-                }
-                if (Item.damage((Item) item) > 0.0f) {
-                    return new AttackAdapter(item);
-                }
+            Equippable equippable = item.components().get(DataComponents.EQUIPPABLE);
+            if (equippable != null && equippable.slot().isArmor()) {
+                return new ArmorAdapter(item, equippable);
+            }
+            if (Item.damage((Item) item) > 0.0f) {
+                return new AttackAdapter(item);
             }
             return (Item) item;
         });
@@ -107,6 +108,19 @@ public final class ItemAdapter {
         @Override
         public Item getItem() {
             return this;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o instanceof BaseAdapter other) return this.mcItem.equals(other.mcItem);
+            if (o instanceof net.minecraft.world.item.Item otherItem) return this.mcItem.equals(otherItem);
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return mcItem.hashCode();
         }
     }
 

@@ -72,7 +72,7 @@ public class MixinWorld implements me.deftware.client.framework.world.World {
 	protected Object tickBlockEntities(Iterator<TickingBlockEntity> iterator) {
 		TickingBlockEntity ticker = iterator.next();
 		if (ticker.isRemoved()) {
-			emcTileEntitiesMap().values().removeIf(e -> e.getTicker().equals(ticker));
+			emcTileEntitiesMap().values().removeIf(e -> e.getTicker() != null && e.getTicker().equals(ticker));
 		}
 		return ticker;
 	}
@@ -156,6 +156,25 @@ public class MixinWorld implements me.deftware.client.framework.world.World {
 	@Override
 	public HashMap<Long, BlockEntity> getInternalLongToBlockEntity() {
 		return longTileEntitiesMap();
+	}
+
+	@Override
+	public void emcRegisterBlockEntity(BlockEntity entity) {
+		if (entity == null) {
+			return;
+		}
+		var pos = entity.getBlockPos();
+		emcTileEntitiesMap().keySet().removeIf(existing -> existing != entity && existing.getBlockPos().equals(pos));
+		emcTileEntitiesMap().putIfAbsent(entity, TileEntity.newInstance(entity, null));
+	}
+
+	@Override
+	public void emcRemoveBlockEntity(net.minecraft.core.BlockPos pos) {
+		if (pos == null) {
+			return;
+		}
+		longTileEntitiesMap().remove(pos.asLong());
+		emcTileEntitiesMap().keySet().removeIf(existing -> existing.getBlockPos().equals(pos));
 	}
 
 	@Override

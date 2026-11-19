@@ -17,12 +17,14 @@ public class MixinTimer implements WorldTimer {
 
     @ModifyVariable(method = "getTickTargetMillis", at = @At("HEAD"), argsOnly = true)
     private float onGetTargetMillis(float millis) {
-        return millis / speed;
+        float safeSpeed = (Float.isFinite(this.speed) && this.speed > 0.0f) ? this.speed : 1.0f;
+        return millis / safeSpeed;
     }
 
     @Redirect(method = "getTickTargetMillis", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/TickRateManager;millisecondsPerTick()F"))
     private float onMax(TickRateManager instance) {
-        return instance.millisecondsPerTick() / speed;
+        float safeSpeed = (Float.isFinite(this.speed) && this.speed > 0.0f) ? this.speed : 1.0f;
+        return instance.millisecondsPerTick() / safeSpeed;
     }
 
     @Override
@@ -32,7 +34,7 @@ public class MixinTimer implements WorldTimer {
 
     @Override
     public void setTimerSpeed(float speed) {
-        this.speed = speed;
+        this.speed = (Float.isFinite(speed) && speed > 0.0f) ? speed : 1.0f;
     }
 
 }

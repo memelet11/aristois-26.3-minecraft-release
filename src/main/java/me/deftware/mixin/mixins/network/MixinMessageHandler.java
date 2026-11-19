@@ -48,6 +48,10 @@ public abstract class MixinMessageHandler {
 
     @Redirect(method = "showMessageToPlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/ChatComponent;addPlayerMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V"))
     private void onAddMessage(ChatComponent instance, Component original, MessageSignature signature, GuiMessageTag indicator) {
+        if (this.event == null) {
+            instance.addPlayerMessage(original, signature, indicator);
+            return;
+        }
         var arg = this.event.getArg();
         Component message = (Component) this.event.getMessage();
         Component text = arg.decorate(message);

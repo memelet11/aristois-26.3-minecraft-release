@@ -11,17 +11,22 @@ import me.deftware.client.framework.world.EnumFacing;
 import me.deftware.mixin.imp.IMixinEntityPlayerSP;
 import me.deftware.mixin.imp.IMixinEntityRenderer;
 import me.deftware.mixin.imp.IMixinPlayerControllerMP;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.ClientInput;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.network.protocol.game.ServerboundPunchPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.item.component.PiercingWeapon;
+import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import java.util.Objects;
@@ -81,12 +86,40 @@ public class MainEntityPlayer extends EntityPlayer {
 	}
 
 	public void swingArmClientSide(EntityHand hand) {
-		getMinecraftEntity().swing(hand.getMinecraftHand(), net.minecraft.world.item.component.SwingAnimation.DEFAULT, true);
+		LocalPlayer player = getMinecraftEntity();
+		if (player == null) {
+			return;
+		}
+		InteractionHand mcHand = hand.getMinecraftHand();
+		SwingAnimation anim = player.getItemInHand(mcHand).getAttackAnimation();
+		player.swing(mcHand, anim, false);
+		if (mcHand == InteractionHand.MAIN_HAND && player.connection != null) {
+			player.connection.send(ServerboundPunchPacket.INSTANCE);
+		}
 	}
 
 	public void attackEntity(Entity entity) {
-		Objects.requireNonNull(net.minecraft.client.Minecraft.getInstance().gameMode)
-				.attack(getMinecraftEntity(), entity.getMinecraftEntity());
+		if (entity == null) {
+			return;
+		}
+		LocalPlayer player = getMinecraftEntity();
+		MultiPlayerGameMode gameMode = net.minecraft.client.Minecraft.getInstance().gameMode;
+		if (player == null || gameMode == null) {
+			return;
+		}
+		net.minecraft.world.item.ItemStack mainHand = player.getItemInHand(InteractionHand.MAIN_HAND);
+		if (player.level() != null && !mainHand.isItemEnabled(player.level().enabledFeatures())) {
+			return;
+		}
+		if (player.cannotAttackWithItem(mainHand, 0)) {
+			return;
+		}
+		PiercingWeapon piercing = mainHand.get(DataComponents.PIERCING_WEAPON);
+		if (piercing != null) {
+			gameMode.piercingAttack(mainHand.getAttackAnimation(), piercing);
+			return;
+		}
+		gameMode.attack(player, entity.getMinecraftEntity());
 		swingArmClientSide();
 	}
 

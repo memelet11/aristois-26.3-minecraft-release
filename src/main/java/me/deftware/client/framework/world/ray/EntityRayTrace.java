@@ -41,8 +41,8 @@ public class EntityRayTrace extends RayTrace<EntitySwingResult> {
         EntityHitResult result = ProjectileUtil.getEntityHitResult(entity, (Vec3) start, (Vec3) end, box, e -> (!e.isSpectator() && e.isPickable()), distance);
 
         if (result != null) {
-            double g = start.distanceTo((Vector3<Double>) result.getLocation());
-            if (g < distance) {
+            double distSqr = result.getLocation().distanceToSqr((Vec3) start);
+            if (distSqr <= distance) {
                 return new EntitySwingResult(result);
             }
         }
@@ -51,7 +51,11 @@ public class EntityRayTrace extends RayTrace<EntitySwingResult> {
     }
 
     public HitResult raycast(Vector3<Double> start, Vector3<Double> end, net.minecraft.world.entity.Entity entity) {
-        return Minecraft.getInstance().level.clip(new ClipContext((Vec3) start, (Vec3) end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, entity));
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null || mc.level == null) {
+            return null;
+        }
+        return mc.level.clip(new ClipContext((Vec3) start, (Vec3) end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, entity));
     }
 
 }

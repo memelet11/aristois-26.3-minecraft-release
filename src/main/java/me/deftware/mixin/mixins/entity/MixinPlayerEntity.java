@@ -9,10 +9,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -39,25 +42,47 @@ public class MixinPlayerEntity {
         cir.setReturnValue(cir.getReturnValue() * event.getMultiplier());
     }
 
+    @Unique
+    private Double getExtendedReachOverride() {
+        var map = GameMap.INSTANCE;
+        if (!map.get(GameKeys.EXTENDED_REACH, false)) {
+            return null;
+        }
+        Player self = (Player) (Object) this;
+        boolean allowed = self instanceof net.minecraft.client.player.LocalPlayer
+                || (self instanceof net.minecraft.server.level.ServerPlayer sp
+                    && sp.level().getServer() != null
+                    && sp.level().getServer().isSingleplayer());
+        if (!allowed) {
+            return null;
+        }
+        Number value = map.get(GameKeys.BLOCK_REACH_DISTANCE, null);
+        return value != null ? value.doubleValue() : 5.0D;
+    }
+
     @Inject(method = "blockInteractionRange", at = @At("HEAD"), cancellable = true)
     private void onGetBlockReachDistance(CallbackInfoReturnable<Double> cir) {
-        var map = GameMap.INSTANCE;
-        if (map.contains(GameKeys.BLOCK_REACH_DISTANCE)) {
-            Float value = map.get(GameKeys.BLOCK_REACH_DISTANCE, null);
-            if (value != null) {
-                cir.setReturnValue((double) value);
-            }
+        Double override = getExtendedReachOverride();
+        if (override != null) {
+            cir.setReturnValue(override);
         }
     }
 
     @Inject(method = "entityInteractionRange", at = @At("HEAD"), cancellable = true)
     private void onGetEntityReachDistance(CallbackInfoReturnable<Double> cir) {
-        var map = GameMap.INSTANCE;
-        if (map.contains(GameKeys.BLOCK_REACH_DISTANCE)) {
-            Float value = map.get(GameKeys.BLOCK_REACH_DISTANCE, null);
-            if (value != null) {
-                cir.setReturnValue((double) value);
-            }
+        Double override = getExtendedReachOverride();
+        if (override != null) {
+            cir.setReturnValue(override);
+        }
+    }
+
+    @Inject(method = "isWithinAttackRange", at = @At("HEAD"), cancellable = true)
+    private void onIsWithinAttackRange(ItemStack stack, AABB box, double tolerance, CallbackInfoReturnable<Boolean> cir) {
+        Double override = getExtendedReachOverride();
+        if (override != null && box != null) {
+            Player self = (Player) (Object) this;
+            double maxRange = override + tolerance;
+            cir.setReturnValue(box.distanceToSqr(self.getEyePosition()) < maxRange * maxRange);
         }
     }
 

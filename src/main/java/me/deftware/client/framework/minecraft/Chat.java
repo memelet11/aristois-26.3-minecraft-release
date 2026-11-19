@@ -43,7 +43,7 @@ public interface Chat {
                 return;
             }
             // Update text and preview if the message has changed
-            if (!event.getMessage().equalsIgnoreCase(text)) {
+            if (!event.getMessage().equals(text)) {
                 text = event.getMessage();
             }
             consumer.accept(text);

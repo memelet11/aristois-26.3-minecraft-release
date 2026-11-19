@@ -23,19 +23,19 @@ public class MixinNbt implements me.deftware.client.framework.nbt.NbtCompound {
     @Unique
     @Override
     public me.deftware.client.framework.nbt.NbtCompound get(String key) {
-        return (me.deftware.client.framework.nbt.NbtCompound) ((CompoundTag) (Object) this).get(key);
+        return (me.deftware.client.framework.nbt.NbtCompound) ((CompoundTag) (Object) this).getCompound(key).orElse(null);
     }
 
     @Unique
     @Override
     public NbtList getList(String items, int type) {
-        return (NbtList) ((CompoundTag) (Object) this).getList(items).orElse(null);
+        return (NbtList) ((CompoundTag) (Object) this).getListOrEmpty(items);
     }
 
     @Unique
     @Override
     public int getByte(String key) {
-        return ((CompoundTag) (Object) this).getByte(key).orElse(null);
+        return ((CompoundTag) (Object) this).getByteOr(key, (byte) 0);
     }
 
     @Unique

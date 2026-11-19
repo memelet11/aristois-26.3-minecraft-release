@@ -23,7 +23,21 @@ public enum MinecraftKeyBind {
 	private final KeyMapping bind;
 
 	public boolean isHeld() {
-		return InputConstants.isKeyDown(((IMixinKeyBinding) this.bind).getInput().getValue());
+		InputConstants.Key key = ((IMixinKeyBinding) this.bind).getInput();
+		if (key == null || key.equals(InputConstants.UNKNOWN) || key.getValue() < 0) {
+			return false;
+		}
+		if (key.getType() == InputConstants.Type.MOUSE) {
+			int glfwButton = org.lwjgl.glfw.GLFW.sdlButtonToGlfwButton(key.getValue());
+			if (glfwButton == org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT
+					|| glfwButton == org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT
+					|| glfwButton == org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
+				var window = Minecraft.getInstance().getWindow();
+				return window != null && org.lwjgl.glfw.GLFW.glfwGetMouseButton(window.handle(), glfwButton) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+			}
+			return this.bind.isDown();
+		}
+		return InputConstants.isKeyDown(key.getValue());
 	}
 
 	public boolean isPressed() {

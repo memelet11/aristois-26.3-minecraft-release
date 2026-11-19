@@ -39,6 +39,15 @@ public abstract class MixinEntityPlayerSP extends MixinEntity implements IMixinE
     @Final
     public ClientPacketListener connection;
 
+    @Shadow
+    private int positionReminder;
+
+    @Unique
+    @Override
+    public void forcePositionSync() {
+        this.positionReminder = 20;
+    }
+
     @Inject(method = "closeContainer", at = @At("HEAD"))
     private void onCloseHandledScreen(CallbackInfo ci) {
         new EventGuiContainerClose().broadcast();

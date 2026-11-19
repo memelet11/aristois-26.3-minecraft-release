@@ -19,22 +19,32 @@ import java.util.function.Predicate;
 
 public enum ItemTypes {
 
-    Tool(item -> item.asMinecraftItem().components().has(DataComponents.TOOL)),
-    SplashPotion(item -> item instanceof SplashPotionItem),
-    Soup(item -> item == Items.BEETROOT_SOUP || item == Items.MUSHROOM_STEW || item == Items.SUSPICIOUS_STEW),
-    WritableBook(item -> item instanceof WritableBookItem),
-    Bow(item -> item instanceof BowItem),
-    Crossbow(item -> item instanceof CrossbowItem),
-    Potion(item -> item instanceof PotionItem),
-    FishingRod(item -> item instanceof FishingRodItem),
-    Trident(item -> item instanceof TridentItem),
-    ShulkerBox(item -> item instanceof BlockItem && item.getTranslationKey().contains("shulker_box")),
-    RangedWeapon(item -> item instanceof ProjectileWeaponItem),
-    Throwable(item -> item instanceof BowItem || item instanceof CrossbowItem || item instanceof SnowballItem
-            || item instanceof EggItem || item instanceof EnderpearlItem || item instanceof SplashPotionItem
-            || item instanceof LingeringPotionItem || item instanceof FishingRodItem
-            || item instanceof TridentItem
-    );
+    Tool(ofMc(mc -> mc.components().has(DataComponents.TOOL))),
+    SplashPotion(ofMc(mc -> mc instanceof SplashPotionItem)),
+    Soup(ofMc(mc -> mc == Items.BEETROOT_SOUP || mc == Items.MUSHROOM_STEW || mc == Items.SUSPICIOUS_STEW)),
+    WritableBook(ofMc(mc -> mc instanceof WritableBookItem)),
+    Bow(ofMc(mc -> mc instanceof BowItem)),
+    Crossbow(ofMc(mc -> mc instanceof CrossbowItem)),
+    Potion(ofMc(mc -> mc instanceof PotionItem)),
+    FishingRod(ofMc(mc -> mc instanceof FishingRodItem)),
+    Trident(ofMc(mc -> mc instanceof TridentItem)),
+    ShulkerBox(item -> item != null && item.asMinecraftItem() instanceof BlockItem && item.getTranslationKey().contains("shulker_box")),
+    RangedWeapon(ofMc(mc -> mc instanceof ProjectileWeaponItem)),
+    Throwable(ofMc(mc -> mc instanceof BowItem || mc instanceof CrossbowItem || mc instanceof SnowballItem
+            || mc instanceof EggItem || mc instanceof EnderpearlItem || mc instanceof SplashPotionItem
+            || mc instanceof LingeringPotionItem || mc instanceof FishingRodItem
+            || mc instanceof TridentItem
+    ));
+
+    private static Predicate<Item> ofMc(Predicate<net.minecraft.world.item.Item> predicate) {
+        return item -> {
+            if (item == null) {
+                return false;
+            }
+            net.minecraft.world.item.Item mc = item.asMinecraftItem();
+            return mc != null && predicate.test(mc);
+        };
+    }
 
     private final Predicate<Item> predicate;
 

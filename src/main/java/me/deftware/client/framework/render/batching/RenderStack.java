@@ -413,14 +413,7 @@ public abstract class RenderStack<T> implements VertexConstructor {
 	}
 
 	private ScreenVertex toScreen2D(MutableVertex v, float scaleFix) {
-		float sx = v.x;
-		float sy = v.y;
-		if (context != null && context.getContext() != null) {
-			Vector2f pos = context.getContext().pose().transformPosition(sx, sy, new Vector2f());
-			sx = pos.x;
-			sy = pos.y;
-		}
-		return new ScreenVertex(sx * scaleFix, sy * scaleFix, v.u, v.v, packColor(v));
+		return new ScreenVertex(v.x * scaleFix, v.y * scaleFix, v.u, v.v, packColor(v));
 	}
 
 	private void addLineQuad2D(List<ScreenQuad> quads, MutableVertex a, MutableVertex b, float scaleFix) {

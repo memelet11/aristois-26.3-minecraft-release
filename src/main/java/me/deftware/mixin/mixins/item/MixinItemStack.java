@@ -146,6 +146,9 @@ public class MixinItemStack implements me.deftware.client.framework.item.ItemSta
     @Unique
     @Override
     public boolean isItemEqual(me.deftware.client.framework.item.ItemStack stack) {
+        if (stack == null) {
+            return false;
+        }
         return ItemStack.isSameItem((ItemStack) (Object) this, (ItemStack) stack);
     }
 
@@ -174,7 +177,8 @@ public class MixinItemStack implements me.deftware.client.framework.item.ItemSta
     private void onGetTooltipFromItem(net.minecraft.world.item.Item.TooltipContext context, Player player,
                                       TooltipFlag type, CallbackInfoReturnable<List<Component>> cir) {
         var list = cir.getReturnValue();
-        new EventGetItemToolTip(list, (Item) ((ItemStack) (Object) this).getItem(),
+        new EventGetItemToolTip(list,
+                me.deftware.client.framework.item.ItemAdapter.wrap(((ItemStack) (Object) this).getItem()),
                 type.isAdvanced()).broadcast();
     }
 

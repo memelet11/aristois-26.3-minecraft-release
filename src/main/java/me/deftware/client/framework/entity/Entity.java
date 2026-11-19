@@ -51,7 +51,7 @@ public class Entity {
 	protected final net.minecraft.world.entity.Entity entity;
 
 	public static Entity newInstance(net.minecraft.world.entity.Entity entity) {
-		if (entity == Minecraft.getInstance().player) {
+		if (entity instanceof net.minecraft.client.player.LocalPlayer || entity == Minecraft.getInstance().player) {
 			return new MainEntityPlayer((Player) entity);
 		} else if (entity instanceof Player) {
 			return new EntityPlayer((Player) entity);

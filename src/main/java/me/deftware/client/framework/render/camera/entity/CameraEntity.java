@@ -59,9 +59,8 @@ public class CameraEntity extends RemotePlayer {
 
 		var movement = input.getMoveVector();
 		motion = motion.add(0, 2 * upDown, 0);
-		// TODO: Verify
-		motion = motion.add(strafe.x * movement.y, 0, strafe.z * movement.y);
-		motion = motion.add(forward.x * movement.x, 0, forward.z * movement.x);
+		motion = motion.add(strafe.x * movement.x, 0, strafe.z * movement.x);
+		motion = motion.add(forward.x * movement.y, 0, forward.z * movement.y);
 
 		this.setPosRaw(this.getX() + motion.x, this.getY() + motion.y, this.getZ() + motion.z);
 	}

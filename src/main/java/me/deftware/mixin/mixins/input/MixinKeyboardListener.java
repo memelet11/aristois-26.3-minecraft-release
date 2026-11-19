@@ -36,15 +36,25 @@ public class MixinKeyboardListener {
     private void onCharEvent(long windowPointer, CharacterEvent characterEvent, CallbackInfo ci) {
         int codePoint = characterEvent.codepoint();
         var minecraft = Minecraft.getInstance();
-        if ((windowPointer == 0L || windowPointer == minecraft.getWindow().handle()) && minecraft.gui.screen() == null && codePoint >= 32 && codePoint <= 348) {
-            if (Character.charCount(codePoint) == 1) {
-                new EventCharacter((char) codePoint, 0).broadcast();
-            } else {
-                for (char character : Character.toChars(codePoint)) {
-                    new EventCharacter(character, 0).broadcast();
+        long windowHandle = minecraft.getWindow().handle();
+        if (windowPointer == 0L || windowPointer == windowHandle) {
+            GLFW.setCharDispatchedInHandler(true);
+            GLFW.dispatchChar(windowPointer == 0L ? windowHandle : windowPointer, codePoint);
+            if (minecraft.gui.screen() == null && codePoint >= 32 && codePoint <= 348) {
+                if (Character.charCount(codePoint) == 1) {
+                    new EventCharacter((char) codePoint, 0).broadcast();
+                } else {
+                    for (char character : Character.toChars(codePoint)) {
+                        new EventCharacter(character, 0).broadcast();
+                    }
                 }
             }
         }
+    }
+
+    @Inject(method = "charTyped", at = @At("RETURN"))
+    private void onCharEventReturn(long windowPointer, CharacterEvent characterEvent, CallbackInfo ci) {
+        GLFW.setCharDispatchedInHandler(false);
     }
 
 }

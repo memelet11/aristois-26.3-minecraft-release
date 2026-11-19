@@ -26,10 +26,12 @@ public class MixinBackgroundRenderer {
         if (eventFogRender.isCanceled()) {
             FogData fogData = cir.getReturnValue();
             if (fogData != null) {
-                fogData.environmentalStart = Float.MAX_VALUE;
-                fogData.renderDistanceStart = Float.MAX_VALUE;
-                fogData.environmentalEnd = Float.MAX_VALUE;
-                fogData.renderDistanceEnd = Float.MAX_VALUE;
+                fogData.environmentalStart = 1_000_000.0f;
+                fogData.renderDistanceStart = 1_000_000.0f;
+                fogData.environmentalEnd = 2_000_000.0f;
+                fogData.renderDistanceEnd = 2_000_000.0f;
+                fogData.skyEnd = 2_000_000.0f;
+                fogData.cloudEnd = 2_000_000.0f;
             }
         }
     }

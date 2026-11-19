@@ -47,7 +47,9 @@ public abstract class MixinChatHud implements GameChat {
     @Unique
     @Override
     public void remove(int index) {
-        trimmedMessages.remove(index);
+        if (index >= 0 && index < trimmedMessages.size()) {
+            trimmedMessages.remove(index);
+        }
     }
 
 }

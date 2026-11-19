@@ -137,15 +137,18 @@ public abstract class MixinEntity implements IMixinEntity {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/border/WorldBorder;isInsideCloseToBorder(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;)Z")
     )
     private static boolean onCollision$WorldBorder(WorldBorder instance, Entity entity, AABB box) {
-        if (GameMap.INSTANCE.get(GameKeys.IGNORE_WORLD_BORDER, false)) {
+        if (entity != null && entity == net.minecraft.client.Minecraft.getInstance().player
+                && GameMap.INSTANCE.get(GameKeys.IGNORE_WORLD_BORDER, false)) {
             return false;
         }
         return instance.isInsideCloseToBorder(entity, box);
     }
 
-    @Inject(method = "isCurrentlyGlowing", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "isCurrentlyGlowing", at = @At("RETURN"), cancellable = true)
     private void isGlowing(CallbackInfoReturnable<Boolean> cir) {
-        cir.setReturnValue(hasGlowingTag);
+        if (hasGlowingTag) {
+            cir.setReturnValue(true);
+        }
     }
 
     @Override
@@ -155,7 +158,9 @@ public abstract class MixinEntity implements IMixinEntity {
 
     @Override
     public void setInPortal(boolean inPortal) {
-        portalProcess.setAsInsidePortalThisTick(inPortal);
+        if (portalProcess != null) {
+            portalProcess.setAsInsidePortalThisTick(inPortal);
+        }
     }
 
     @Override

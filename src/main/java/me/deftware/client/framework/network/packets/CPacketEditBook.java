@@ -33,7 +33,9 @@ public class CPacketEditBook extends PacketWrapper {
             for (var page : pages) {
                 list.add(page.raw());
             }
-            return new ServerboundEditBookPacket(0, list, Optional.empty());
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            int slot = (mc != null && mc.player != null) ? mc.player.getInventory().getSelectedSlot() : 0;
+            return new ServerboundEditBookPacket(slot, list, Optional.empty());
         }
         throw new IllegalArgumentException("ItemStack must be a writable book with valid data");
     }

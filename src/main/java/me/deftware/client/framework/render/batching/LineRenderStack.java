@@ -48,10 +48,11 @@ public class LineRenderStack extends RenderStack<LineRenderStack> {
 	}
 
 	public LineRenderStack lineToBlockPosition(BlockPosition pos) {
+		var cam = Minecraft.getMinecraftGame().getCamera();
 		return drawLine(
-				pos.getX() - Minecraft.getMinecraftGame().getCamera()._getRenderPosX(),
-				pos.getY() + 1f / 2.0F - Minecraft.getMinecraftGame().getCamera()._getRenderPosY(),
-				pos.getZ() - Minecraft.getMinecraftGame().getCamera()._getRenderPosZ()
+				pos.getX() + 0.5D - cam._getRenderPosX(),
+				pos.getY() + 0.5D - cam._getRenderPosY(),
+				pos.getZ() + 0.5D - cam._getRenderPosZ()
 		);
 	}
 
@@ -60,10 +61,25 @@ public class LineRenderStack extends RenderStack<LineRenderStack> {
 	}
 
 	public LineRenderStack lineToEntity(Entity entity) {
+		var cam = Minecraft.getMinecraftGame().getCamera();
+		net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+		net.minecraft.world.entity.Entity mcEntity = entity.getMinecraftEntity();
+		double x, y, z;
+		if (mc != null && mc.getDeltaTracker() != null && mcEntity != null) {
+			float tickDelta = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
+			Vec3 pos = mcEntity.getPosition(tickDelta);
+			x = pos.x;
+			y = pos.y + entity.getHeight() / 2.0F;
+			z = pos.z;
+		} else {
+			x = entity.getPosX();
+			y = entity.getPosY() + entity.getHeight() / 2.0F;
+			z = entity.getPosZ();
+		}
 		return drawLine(
-				entity.getBlockPosition().getX() - Minecraft.getMinecraftGame().getCamera()._getRenderPosX(),
-				entity.getBlockPosition().getY() + entity.getHeight() / 2.0F - Minecraft.getMinecraftGame().getCamera()._getRenderPosY(),
-				entity.getBlockPosition().getZ() - Minecraft.getMinecraftGame().getCamera()._getRenderPosZ()
+				x - cam._getRenderPosX(),
+				y - cam._getRenderPosY(),
+				z - cam._getRenderPosZ()
 		);
 	}
 

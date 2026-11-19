@@ -52,14 +52,17 @@ public class ThrowData {
     public static void checkIntersection(EyeOfEnder entity) {
         Vec3 vel = entity.getDeltaMovement();
         if (firstThrow != null && secondThrow != null && Math.abs(vel.x * vel.z) <= .0000001 && Math.abs(vel.y) != 0.0D) {
-            EventStructureLocation event = new EventStructureLocation(firstThrow.calculateIntersection(secondThrow), EventStructureLocation.StructureType.Stronghold);
-            event.broadcast();
+            double[] xz = firstThrow.calculateIntersectionXZ(secondThrow);
+            if (Double.isFinite(xz[0]) && Double.isFinite(xz[1])) {
+                EventStructureLocation event = new EventStructureLocation(Vector3.ofDouble(xz[0], 36, xz[1]), EventStructureLocation.StructureType.Stronghold);
+                event.broadcast();
+            }
         }
     }
 
     public void addVec(double x, double z) {
-        this.x = this.x * count + x / (count + 1);
-        this.z = this.z * count + z / (++count);
+        this.x = (this.x * count + x) / (count + 1);
+        this.z = (this.z * count + z) / (++count);
     }
 
     /**
@@ -68,12 +71,18 @@ public class ThrowData {
      * 1 = d
      * 2 = this
      */
-    public Vector3<Double> calculateIntersection(ThrowData d) {
-        double x = (-d.z * d.posX * this.x + d.x * d.posZ * this.x + d.x * this.z * this.posX + d.x * -this.x * this.posZ)
-                / (d.x * this.z - d.z * this.x);
-        double z = (this.z / this.x) * x + this.posZ - (this.z / this.x) * this.posX;
+    public double[] calculateIntersectionXZ(ThrowData d) {
+        double denom = d.x * this.z - d.z * this.x;
+        if (Math.abs(denom) < 1e-9) {
+            return new double[] { Double.NaN, Double.NaN };
+        }
+        double t = ((this.posX - d.posX) * d.z - (this.posZ - d.posZ) * d.x) / denom;
+        return new double[] { this.posX + t * this.x, this.posZ + t * this.z };
+    }
 
-        return Vector3.ofDouble(x, 36, z);
+    public Vector3<Double> calculateIntersection(ThrowData d) {
+        double[] xz = calculateIntersectionXZ(d);
+        return Vector3.ofDouble(xz[0], 36, xz[1]);
     }
 
     public boolean sameEntity(EyeOfEnder e) {

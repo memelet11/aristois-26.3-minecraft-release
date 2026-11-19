@@ -34,15 +34,15 @@ public abstract class MixinEntityLivingBase implements IMixinEntityLivingBase {
 
     @Inject(method = "hasEffect", at = @At(value = "TAIL"), cancellable = true)
     private void onHasStatusEffect(Holder<MobEffect> effect, CallbackInfoReturnable<Boolean> cir) {
-        if (((LivingEntity) (Object) this).isAlwaysTicking()) {
-            EventIsPotionActive event = new EventIsPotionActive(effect.value().getDescriptionId(), activeEffects.containsKey(effect)).broadcast();
+        if ((LivingEntity) (Object) this instanceof net.minecraft.world.entity.player.Player player && player.isLocalPlayer()) {
+            EventIsPotionActive event = new EventIsPotionActive(effect.value().getDescriptionId(), cir.getReturnValue()).broadcast();
             cir.setReturnValue(event.isActive());
         }
     }
 
     @Inject(method = "getJumpPower()F", at = @At(value = "TAIL"), cancellable = true)
     private void onGetJumpVelocity(CallbackInfoReturnable<Float> cir) {
-        if (((LivingEntity) (Object) this).isAlwaysTicking())
+        if ((LivingEntity) (Object) this instanceof net.minecraft.world.entity.player.Player player && player.isLocalPlayer())
             cir.setReturnValue(GameMap.INSTANCE.get(GameKeys.JUMP_HEIGHT, cir.getReturnValue()));
     }
 
@@ -53,14 +53,16 @@ public abstract class MixinEntityLivingBase implements IMixinEntityLivingBase {
 
     @Redirect(method = "travelInAir", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getEffect(Lnet/minecraft/core/Holder;)Lnet/minecraft/world/effect/MobEffectInstance;"))
     private MobEffectInstance travelHasStatusEffectProxy(LivingEntity self, Holder<MobEffect> statusEffect) {
-        if (statusEffect == MobEffects.LEVITATION && !GameMap.INSTANCE.get(GameKeys.LEVITATION, true) && ((LivingEntity) (Object) this).isAlwaysTicking())
+        if (statusEffect == MobEffects.LEVITATION && !GameMap.INSTANCE.get(GameKeys.LEVITATION, true)
+                && self instanceof net.minecraft.world.entity.player.Player player && player.isLocalPlayer())
             return null;
         return self.getEffect(statusEffect);
     }
 
     @Redirect(method = "travelInAir", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getEffectiveGravity()D"))
     private double travelHasNoGravityProxy(LivingEntity self) {
-        if (self.hasEffect(MobEffects.LEVITATION) && !GameMap.INSTANCE.get(GameKeys.LEVITATION, true) && ((LivingEntity) (Object) this).isAlwaysTicking())
+        if (self.hasEffect(MobEffects.LEVITATION) && !GameMap.INSTANCE.get(GameKeys.LEVITATION, true)
+                && self instanceof net.minecraft.world.entity.player.Player player && player.isLocalPlayer())
             return 0;
         return this.getEffectiveGravity();
     }

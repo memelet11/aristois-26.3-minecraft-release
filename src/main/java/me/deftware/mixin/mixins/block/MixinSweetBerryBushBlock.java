@@ -2,6 +2,7 @@ package me.deftware.mixin.mixins.block;
 
 import me.deftware.client.framework.event.events.EventDamage;
 import me.deftware.client.framework.event.events.EventSlowdown;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -23,11 +24,14 @@ public class MixinSweetBerryBushBlock {
 
     @Redirect(method = "entityInside", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;makeStuckInBlock(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/phys/Vec3;)V"))
     private void onSlowMovement(Entity entity, BlockState state, Vec3 multiplier) {
-        slowdown.create(EventSlowdown.SlowdownType.BerryBush, 1);
-        slowdown.broadcast();
-        if(!slowdown.isCanceled()) {
-            entity.makeStuckInBlock(state, multiplier);
+        if (entity == Minecraft.getInstance().player) {
+            slowdown.create(EventSlowdown.SlowdownType.BerryBush, 1);
+            slowdown.broadcast();
+            if (slowdown.isCanceled()) {
+                return;
+            }
         }
+        entity.makeStuckInBlock(state, multiplier);
     }
 
     @Inject(method = "entityInside", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;hurtServer(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z"), cancellable = true)

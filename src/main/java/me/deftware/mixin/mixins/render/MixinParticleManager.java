@@ -27,7 +27,7 @@ public class MixinParticleManager {
             var id = entry.getRegisteredName();
             EventParticle event = new EventParticle(id, x, y, z, velocityX, velocityY, velocityZ).broadcast();
             if (event.isCanceled()) {
-                ci.cancel();
+                ci.setReturnValue(null);
             }
         }
     }
